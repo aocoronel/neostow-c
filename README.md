@@ -26,7 +26,7 @@ cmake --install build
 
 `neostow` reads from a `.neostow` file in the current directory to determine which symlinks to create. The `.neostow` file should contain lines in the following format: `source=destination`.
 
-See the manpage for more details.
+See the manpage(1) at `FILES` for more details.
 
 ```console
 neostow | The Declarative GNU Stow
