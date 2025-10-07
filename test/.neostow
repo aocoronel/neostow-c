@@ -1,3 +1,10 @@
 file.zip=$HOME
+file.docx=.
+# ignored line
 broken line
+file.sh=~/ # This should expand to /home/user/
+file.mp3=rm -rf /
+file.epub=sudo rm -rf /
+file.png=$HOME && sudo rm -rf /
 subdir/file.avif=$HOME
+meme-file.png=$HOME; sudo rm -rf /
