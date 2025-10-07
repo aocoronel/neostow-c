@@ -8,15 +8,16 @@ struct ProgramArguments args[] = {
 };
 
 struct ProgramCommands commands[] = {
-        {"autocomplete", "SHELL", "Generate autocompletion for bash or zsh"},
-        {"edit", NULL, "Edit the configuration file"},
+        { "autocomplete", "SHELL", "Generate autocompletion for bash or zsh" },
+        { "edit", NULL, "Edit the configuration file" },
         { "delete", NULL, "Delete symlinks" },
 };
 
 struct ProgramFlag flags[] = {
-        { "-c", "--config", "CONFIG", "Load an alternative config"},
+        { "-c", "--config", "CONFIG", "Load an alternative config" },
         { "-D", "--debug", NULL, "Enables debug verbosity" },
-        { "-r", "--remove", NULL, "Remove duplicate files" },
+        { "-d", "--dry", NULL, "Describe potential operations" },
+        { "-o", "--overwrite", NULL, "Overwrite existing symlinks" },
         { "-h", "--help", NULL, "Displays this message and exits" },
         { "-V", "--verbose", NULL, "Enable verbosity" },
         { "-v", "--version", NULL, "Displays program version" },

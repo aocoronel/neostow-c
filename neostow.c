@@ -23,6 +23,9 @@ bool REMOVE = false;
 bool DELETE = false;
 bool DEBUG_MODE = false;
 
+int operations = 0;
+int count = 0;
+
 struct config_data {
         char *file;
         char *src;
@@ -30,7 +33,6 @@ struct config_data {
 };
 
 struct config_data entries[MAX_ENTRIES];
-int count = 0;
 
 static struct option long_options[] = { { "verbose", no_argument, 0, 'V' },
                                         { "help", no_argument, 0, 'h' },
@@ -38,7 +40,7 @@ static struct option long_options[] = { { "verbose", no_argument, 0, 'V' },
                                         { "debug", no_argument, 0, 'D' },
                                         { "dry", no_argument, 0, 'd' },
                                         { "delete", no_argument, 0, 'd' },
-                                        { "remove", no_argument, 0, 'r' },
+                                        { "overwrite", no_argument, 0, 'o' },
                                         { "version", no_argument, 0, 'v' },
                                         { 0, 0, 0, 0 } };
 
@@ -65,13 +67,13 @@ int main(int argc, char *argv[]) {
                 return EXIT_FAILURE;
         }
 
-        while ((opt = getopt_long(argc, argv, ":rDdvVhc:", long_options,
+        while ((opt = getopt_long(argc, argv, ":oDdvVhc:", long_options,
                                   NULL)) != -1) {
                 switch (opt) {
                 case 'c':
                         NEOSTOW_FILE = optarg;
                         break;
-                case 'r':
+                case 'o':
                         REMOVE = true;
                         break;
                 case 'D':
@@ -154,7 +156,11 @@ int main(int argc, char *argv[]) {
                 free(entries[i].file);
         }
 
-        if (DRY_MODE) printf("%s", "No operations were applied.\n");
+        if (DRY_MODE)
+                printf("%s", "No operations were applied.\n");
+        else
+                printf("%d operations were applied.", operations);
+
         return EXIT_SUCCESS;
 }
 
@@ -422,6 +428,7 @@ int neostow(int i) {
         if (symlink(entries[i].src, filepath) == 0) {
                 if (VERBOSE)
                         printf("%s ==> %s\n", entries[i].file, entries[i].dst);
+                operations++;
         } else {
                 printfc(ERROR, "%s ==> %s\n", strerror(errno), entries[i].file);
         }
