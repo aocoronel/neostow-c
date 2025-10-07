@@ -244,7 +244,7 @@ void trim_newline(char *str) {
 }
 
 void version() {
-        printf("%s", "0.1.0");
+        printf("%s", "1.0.0");
         return;
 }
 
