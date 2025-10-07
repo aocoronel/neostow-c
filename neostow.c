@@ -21,6 +21,7 @@ bool VERBOSE = false;
 bool DRY_MODE = false;
 bool REMOVE = false;
 bool DELETE = false;
+bool FORCE = false;
 bool DEBUG_MODE = false;
 
 int operations = 0;
@@ -39,6 +40,7 @@ static struct option long_options[] = { { "verbose", no_argument, 0, 'V' },
                                         { "config", required_argument, 0, 'c' },
                                         { "debug", no_argument, 0, 'D' },
                                         { "dry", no_argument, 0, 'd' },
+                                        { "force", no_argument, 0, 'F' },
                                         { "delete", no_argument, 0, 'd' },
                                         { "overwrite", no_argument, 0, 'o' },
                                         { "version", no_argument, 0, 'v' },
@@ -67,11 +69,14 @@ int main(int argc, char *argv[]) {
                 return EXIT_FAILURE;
         }
 
-        while ((opt = getopt_long(argc, argv, ":oDdvVhc:", long_options,
+        while ((opt = getopt_long(argc, argv, ":oFDdvVhc:", long_options,
                                   NULL)) != -1) {
                 switch (opt) {
                 case 'c':
                         NEOSTOW_FILE = optarg;
+                        break;
+                case 'F':
+                        FORCE = true;
                         break;
                 case 'o':
                         REMOVE = true;
@@ -149,7 +154,9 @@ int main(int argc, char *argv[]) {
         int i;
         for (i = 0; i < count; i++) {
                 if (neostow(i) != 0) {
-                        if (DEBUG_MODE) printfc(DEBUG, "%s failed");
+                        if (DEBUG_MODE)
+                                printfc(ERROR, "processing %s\n",
+                                        entries[i].file);
                 };
                 free(entries[i].src);
                 free(entries[i].dst);
@@ -159,7 +166,7 @@ int main(int argc, char *argv[]) {
         if (DRY_MODE)
                 printf("%s", "No operations were applied.\n");
         else
-                printf("%d operations were applied.", operations);
+                printf("%d operations were applied.\n", operations);
 
         return EXIT_SUCCESS;
 }
@@ -362,32 +369,31 @@ int neostow(int i) {
                         printfc(ERROR, "%s ==> %s\n", strerror(errno),
                                 entries[i].file);
                         return EXIT_FAILURE;
-                };
+                }
                 if (S_ISREG(st_src.st_mode) || S_ISDIR(st_src.st_mode)) {
                         found_src = true;
                 }
-
                 if (stat(entries[i].dst, &st_dst) != 0) {
                         printfc(ERROR, "%s ==> %s\n", strerror(errno),
                                 entries[i].dst);
                         return EXIT_FAILURE;
-                };
-                if (S_ISDIR(st_dst.st_mode)) {
+                }
+                if (S_ISDIR(st_dst.st_mode) || S_ISREG(st_dst.st_mode)) {
                         found_dst = true;
                 }
                 if (!found_src) {
                         if (VERBOSE) {
                                 printfc(ERROR, "source not found: %s\n",
                                         entries[i].src);
-                                return EXIT_FAILURE;
                         }
+                        return EXIT_FAILURE;
                 }
                 if (!found_dst) {
                         if (VERBOSE) {
                                 printfc(ERROR, "destination not found: %s\n",
                                         entries[i].dst);
-                                return EXIT_FAILURE;
                         }
+                        return EXIT_FAILURE;
                 }
         }
 
@@ -411,14 +417,36 @@ int neostow(int i) {
 
         if (REMOVE) {
                 struct stat st_file;
-                if (stat(filepath, &st_file) == 0) {
-                        if (remove(filepath) != 0) {
-                                printfc(ERROR, "Failed to remove %s: %s\n",
-                                        filepath, strerror(errno));
-                                return EXIT_FAILURE;
-                        }
-                } else if (errno != ENOENT) {
+                if (lstat(filepath, &st_file) != 0) {
                         printfc(ERROR, "%s\n", strerror(errno));
+                        return EXIT_FAILURE;
+                }
+
+                if (FORCE == false && !S_ISLNK(st_file.st_mode)) {
+                        char cmd[MAX_PATH_LEN + MAX_PATH_LEN];
+                        snprintf(cmd, sizeof(cmd), "%s %s %s", "diff -u",
+                                 filepath, entries[i].src);
+                        printf("Diff: %s x %s\n", entries[i].file, filepath);
+                        system(cmd);
+
+                        char choice;
+                        printf("Do you want to continue? (y/N): ");
+                        do {
+                                choice = fgetc(stdin);
+
+                                int c;
+                                while ((c = getchar()) != '\n' && c != EOF)
+                                        ;
+
+                        } while (choice != 'Y' && choice != 'y' &&
+                                 choice != 'N' && choice != 'n');
+
+                        if (choice == 'N' || choice == 'n') return EXIT_SUCCESS;
+                }
+
+                if (remove(filepath) != 0) {
+                        printfc(ERROR, "Failed to remove %s: %s\n", filepath,
+                                strerror(errno));
                         return EXIT_FAILURE;
                 }
 
