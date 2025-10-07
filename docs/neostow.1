@@ -1,12 +1,12 @@
 .TH neostow 1
 .SH NAME
 .B neostow
-\- the declarative GNU stow
+\- the declarative GNU stow(1)
 .SH SYNOPSIS
 .B neostow
 .I [OPTION] [ARGUMENT]
 .SH DESCRIPTION
-neostow is a tool that streamline the process to manage symlinks like GNU stow, but using a neostow file. It allows for more flexible symlink management, enabling the creation of symlinks from anywhere to anywhere on your computer.
+neostow is a tool that streamline the process to manage symlinks like GNU stow(1), but using a neostow file. It allows for more flexible symlink management, enabling the creation of symlinks from anywhere to anywhere on your computer.
 
 This declarative nature allows to easily make reproducible and granular symlinking, unlike GNU Stow. However, this project does not aims to fully replace GNU Stow, but to give a declarative feature missing from it.
 .SH COMMANDS
@@ -20,7 +20,6 @@ Remove all existing symlinks set in the neostow file.
 .B edit
 Edit the neostow file using the default EDITOR.
 .SH OPTIONS
-.TP
 .TP
 .B -D, --debug
 Enables debug verbosity.
@@ -49,7 +48,9 @@ Displays program version.
 The neostow file is defined as .neostow. By default this file will be looked in the current directory, otherwise explicitly located using the -c option.
 .TP
 .B Syntax
+
 The syntax consists of a source file/directory and a destination file/directory separated by the equal (=) symbol.
+
 It's allowed to use environment variables in the neostow file.
 
 It's possible to set files and directories, which will be infered by the presence of a backslash.
@@ -59,18 +60,17 @@ Next, there is a quick example:
 neostow/=$HOME/Download/
 .TP
 .B Source File
+
 The source file is always defined relatively as the .neostow file. So, if the neostow file is at the home directory, to specify the Desktop directory, just type it and make sure to add an ending backslash (/).
 
 .TP
 .B Destination File
+
 The destination file must be specified as a absolute path, unlike the source file.
 
 .SH EXAMPLE
 
-Consider the following example.
-
-.B Configuration Location:
-$HOME/dev/neostow
+Consider the following example for the neostow file located at $HOME/dev/neostow
 
 .B Contents:
 
@@ -80,7 +80,9 @@ github/neostow/src/neostow=$HOME/.local/bin/
 
 codeberg/=$HOME/
 
-To properly use this neostow file, the -f option is required.
+To properly use this neostow file, the -f option is required, since the default file is always the .neostow file at the current directly. So, it should be used like neostow -f $HOME/dev/neostow.
+
+.B Expected behaviour:
 
 This example will link bmark and neostow files to .local/bin, and the codeberg directory to the home directory.
 .SH SEE ALSO
