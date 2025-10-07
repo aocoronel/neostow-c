@@ -19,6 +19,7 @@ struct ProgramFlag flags[] = {
         { "-d", "--dry", NULL, "Describe potential operations" },
         { "-o", "--overwrite", NULL, "Overwrite existing symlinks" },
         { "-h", "--help", NULL, "Displays this message and exits" },
+        { "-F", "--force", NULL, "Skip prompt dialogs" },
         { "-V", "--verbose", NULL, "Enable verbosity" },
         { "-v", "--version", NULL, "Displays program version" },
 };
