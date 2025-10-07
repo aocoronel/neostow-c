@@ -1,10 +1,19 @@
+# Neostow expected behavior is to make a symlink of the file, marked at the left
+# side of the equal sign, to the destination, marked at the right.
+# Neostow should not be able to run arbitrary commands, but should allow to
+# symlink to root owned directories.
+# Empty lines are skipped.
+# Comments can be done using hashtags.
+
 file.zip=$HOME
-file.docx=.
+file.docx=. # This directory
 # ignored line
-broken line
+broken line # lines without = are invalid
 file.sh=~/ # This should expand to /home/user/
-file.mp3=rm -rf /
-file.epub=sudo rm -rf /
-file.png=$HOME && sudo rm -rf /
 subdir/file.avif=$HOME
-meme-file.png=$HOME; sudo rm -rf /
+file.txt=/ # This is allowed, though
+# The lines below were added to make sure shell commands cannot be injected
+file.mp3=rm -rf / # does not work
+file.epub=sudo rm -rf / # nope
+file.png=$HOME && sudo rm -rf / # nice trick
+meme-file.png=$HOME; sudo rm -rf / # won't budge
