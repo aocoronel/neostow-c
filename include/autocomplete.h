@@ -4,17 +4,17 @@
 
 struct ProgramArguments args[] = {
         { "SHELL", "echo -e 'bash\\nzsh'" },
-        { "CONFIG", "ls" },
+        { "FILE", "ls" },
 };
 
 struct ProgramCommands commands[] = {
         { "autocomplete", "SHELL", "Generate autocompletion for bash or zsh" },
-        { "edit", NULL, "Edit the configuration file" },
+        { "edit", NULL, "Edit the neostow file" },
         { "delete", NULL, "Delete symlinks" },
 };
 
 struct ProgramFlag flags[] = {
-        { "-c", "--config", "CONFIG", "Load an alternative config" },
+        { "-f", "--file", "FILE", "Load an alternative neostow file" },
         { "-D", "--debug", NULL, "Enables debug verbosity" },
         { "-d", "--dry", NULL, "Describe potential operations" },
         { "-o", "--overwrite", NULL, "Overwrite existing symlinks" },

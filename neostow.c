@@ -40,7 +40,7 @@ struct config_data entries[MAX_ENTRIES];
 
 static struct option long_options[] = { { "verbose", no_argument, 0, 'V' },
                                         { "help", no_argument, 0, 'h' },
-                                        { "config", required_argument, 0, 'c' },
+                                        { "file", required_argument, 0, 'f' },
                                         { "debug", no_argument, 0, 'D' },
                                         { "dry", no_argument, 0, 'd' },
                                         { "force", no_argument, 0, 'F' },
@@ -71,10 +71,10 @@ int main(int argc, char *argv[]) {
                 return EXIT_FAILURE;
         }
 
-        while ((opt = getopt_long(argc, argv, ":oFDdvVhc:", long_options,
+        while ((opt = getopt_long(argc, argv, ":oFDdvVhf:", long_options,
                                   NULL)) != -1) {
                 switch (opt) {
-                case 'c':
+                case 'f':
                         NEOSTOW_FILE = optarg;
                         break;
                 case 'F':
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
                 return EXIT_FAILURE;
         };
         if (S_ISREG(st.st_mode)) {
-                if (DEBUG_MODE) printfc(DEBUG, "found config file\n");
+                if (DEBUG_MODE) printfc(DEBUG, "found neostow file\n");
         } else {
                 if (DEBUG_MODE) printfc(DEBUG, "neostow file not found\n");
                 return EXIT_FAILURE;

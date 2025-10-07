@@ -1,6 +1,6 @@
 # The declarative GNU Stow
 
-`neostow` is a tool that streamline the process to manage symlinks like GNU stow, but using a configuration file. It allows for more flexible symlink management, enabling the creation of symlinks from anywhere to anywhere on your computer.
+`neostow` is a tool that streamline the process to manage symlinks like GNU stow, but using a neostow file. It allows for more flexible symlink management, enabling the creation of symlinks from anywhere to anywhere on your computer.
 
 This declarative nature allows to easily make reproducible and granular symlinking, unlike GNU Stow. However, this project does not aims to fully replace GNU Stow, but to give a declarative feature missing from it.
 
@@ -9,7 +9,7 @@ You can also look for a version of this script written in Bash at [aocoronel/neo
 ## Features
 
 - **Flexible Symlink Creation**: Create symlinks from any source to any destination.
-- **Per-Project Configuration**: Maintain a `.neostow` configuration file per project.
+- **Per-Project Neostow file**: Maintain a `.neostow` file per project.
 - **Overwrite Symlinks**: Optionally overwrite existing symlinks.
 - **Remove Symlinks**: Easily remove all created symlinks.
 
@@ -39,7 +39,7 @@ Commands:
   delete
           Delete symlinks
   edit
-          Edit the configuration file
+          Edit the neostow file
 
 Options:
   -D, --debug
@@ -48,8 +48,8 @@ Options:
           Skip prompt dialogs
   -V, --verbose
           Enable verbosity
-  -c, --config <CONFIG>
-          Load an alternative config
+  -f, --file <FILE>
+          Load an alternative neostow file
   -d, --dry
           Describe potential operations
   -h, --help
@@ -60,7 +60,7 @@ Options:
           Displays program version
 ```
 
-### Configuration File
+### Neostow File
 
 The `.neostow` file should be placed in the root of your project directory.
 

@@ -6,7 +6,7 @@
 .B neostow
 .I [OPTION] [ARGUMENT]
 .SH DESCRIPTION
-neostow is a tool that streamline the process to manage symlinks like GNU stow, but using a configuration file. It allows for more flexible symlink management, enabling the creation of symlinks from anywhere to anywhere on your computer.
+neostow is a tool that streamline the process to manage symlinks like GNU stow, but using a neostow file. It allows for more flexible symlink management, enabling the creation of symlinks from anywhere to anywhere on your computer.
 
 This declarative nature allows to easily make reproducible and granular symlinking, unlike GNU Stow. However, this project does not aims to fully replace GNU Stow, but to give a declarative feature missing from it.
 .SH COMMANDS
@@ -15,10 +15,10 @@ This declarative nature allows to easily make reproducible and granular symlinki
 Generate autocompletion for bash or zsh.
 .TP
 .B delete
-Remove all existing symlinks from the configuration file.
+Remove all existing symlinks set in the neostow file.
 .TP
 .B edit
-Edit the configuration file using the default EDITOR.
+Edit the neostow file using the default EDITOR.
 .SH OPTIONS
 .TP
 .TP
@@ -30,8 +30,8 @@ Skip prompt dialogs. This will skip a prompt that appears, when the destination 
 .TP
 .B -V, --verbose
 Enable verbosity.
-.B -c, --config [CONFIG]
-Load an alternative config.
+.B -f, --file [FILE]
+Load an alternative neostow file.
 .TP
 .B -d, --dry
 Describe potential operations. No symlink or remove operation occurs.
@@ -46,11 +46,11 @@ Overwrite symlinks, if they already exist. If the destination is a file, a promp
 Displays program version.
 .SH FILES
 
-The configuration file is defined as .neostow. By default this file will be looked in the current directory, otherwise explicitly located using the -c option.
+The neostow file is defined as .neostow. By default this file will be looked in the current directory, otherwise explicitly located using the -c option.
 .TP
 .B Syntax
 The syntax consists of a source file/directory and a destination file/directory separated by the equal (=) symbol.
-It's allowed to use environment variables in the configuration file.
+It's allowed to use environment variables in the neostow file.
 
 It's possible to set files and directories, which will be infered by the presence of a backslash.
 
@@ -59,7 +59,7 @@ Next, there is a quick example:
 neostow/=$HOME/Download/
 .TP
 .B Source File
-The source file is always defined relatively as the .neostow file. So, if the config file is at the home directory, to specify the Desktop directory, just type it and make sure to add an ending backslash (/).
+The source file is always defined relatively as the .neostow file. So, if the neostow file is at the home directory, to specify the Desktop directory, just type it and make sure to add an ending backslash (/).
 
 .TP
 .B Destination File
@@ -80,7 +80,7 @@ github/neostow/src/neostow=$HOME/.local/bin/
 
 codeberg/=$HOME/
 
-To properly use this configuration, the -c option is required.
+To properly use this neostow file, the -f option is required.
 
 This example will link bmark and neostow files to .local/bin, and the codeberg directory to the home directory.
 .SH SEE ALSO
