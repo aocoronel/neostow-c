@@ -378,10 +378,13 @@ int diff(const char *src, const char *dst) {
 }
 
 int neostow(int i) {
+        bool use_basename = false;
+        char filepath[MAX_PATH_LEN + MAX_PATH_LEN];
+        struct stat st_src;
+        const char *src_basename;
         {
                 bool found_src = false;
                 bool found_dst = false;
-                struct stat st_src;
                 struct stat st_dst;
 
                 if (stat(entries[i].src, &st_src) != 0) {
@@ -391,6 +394,15 @@ int neostow(int i) {
                 }
                 if (S_ISREG(st_src.st_mode) || S_ISDIR(st_src.st_mode)) {
                         found_src = true;
+                }
+                if (S_ISDIR(st_src.st_mode)) {
+                        use_basename = true;
+                        src_basename = basename_from_path(entries[i].src);
+                        snprintf(filepath, MAX_PATH_LEN, "%s/%s",
+                                 entries[i].dst, src_basename);
+                } else {
+                        snprintf(filepath, MAX_PATH_LEN, "%s/%s",
+                                 entries[i].dst, entries[i].file);
                 }
                 if (stat(entries[i].dst, &st_dst) != 0) {
                         printfc(ERROR, "%s ==> %s\n", strerror(errno),
@@ -416,10 +428,6 @@ int neostow(int i) {
                 }
         }
 
-        char filepath[MAX_PATH_LEN];
-        snprintf(filepath, MAX_PATH_LEN, "%s/%s", entries[i].dst,
-                 entries[i].file);
-
         if (DRY_MODE == false) ensure_directory(entries[i].dst);
 
         if (DEBUG_MODE) {
@@ -432,41 +440,48 @@ int neostow(int i) {
         if (REMOVE) {
                 struct stat st_file;
                 if (lstat(filepath, &st_file) == 0) {
-                        if (FORCE == false && !S_ISLNK(st_file.st_mode)) {
-                                printf("Diff: %s x %s\n", entries[i].file,
-                                       filepath);
-                                diff(entries[i].src, filepath);
-                                char choice;
-                                printf("Do you want to continue? (y/N): ");
-                                do {
-                                        choice = fgetc(stdin);
+                        if (!S_ISDIR(st_file.st_mode)) {
+                                if (FORCE == false &&
+                                    !S_ISLNK(st_file.st_mode)) {
+                                        printf("Diff: %s x %s\n",
+                                               entries[i].file, filepath);
+                                        diff(entries[i].src, filepath);
+                                        char choice;
+                                        printf("Do you want to continue? (y/N): ");
+                                        do {
+                                                choice = fgetc(stdin);
 
-                                        int c;
-                                        while ((c = getchar()) != '\n' &&
-                                               c != EOF)
-                                                ;
+                                                int c;
+                                                while ((c = getchar()) !=
+                                                               '\n' &&
+                                                       c != EOF)
+                                                        ;
 
-                                } while (choice != 'Y' && choice != 'y' &&
-                                         choice != 'N' && choice != 'n');
+                                        } while (choice != 'Y' &&
+                                                 choice != 'y' &&
+                                                 choice != 'N' &&
+                                                 choice != 'n');
 
-                                if (choice == 'N' || choice == 'n')
-                                        return EXIT_SUCCESS;
+                                        if (choice == 'N' || choice == 'n')
+                                                return EXIT_SUCCESS;
+                                }
+
+                                if (DRY_MODE) {
+                                        printfc(INFO, "would remove %s\n",
+                                                filepath);
+                                } else {
+                                        if (remove(filepath) != 0) {
+                                                printfc(ERROR,
+                                                        "failed to remove %s: %s\n",
+                                                        filepath,
+                                                        strerror(errno));
+                                                return EXIT_FAILURE;
+                                        } else
+                                                operations++;
+                                }
                         }
-
-                        if (DRY_MODE) {
-                                printfc(INFO, "would remove %s\n", filepath);
-                        } else {
-                                if (remove(filepath) != 0) {
-                                        printfc(ERROR,
-                                                "failed to remove %s: %s\n",
-                                                filepath, strerror(errno));
-                                        return EXIT_FAILURE;
-                                } else
-                                        operations++;
-                        }
+                        if (DELETE) return EXIT_SUCCESS;
                 }
-
-                if (DELETE) return EXIT_SUCCESS;
         }
 
         if (DRY_MODE) {
@@ -475,9 +490,16 @@ int neostow(int i) {
         }
 
         if (symlink(entries[i].src, filepath) == 0) {
-                if (VERBOSE)
-                        printf("%s ==> %s\n", entries[i].file, entries[i].dst);
-                operations++;
+                if (VERBOSE) {
+                        if (use_basename) {
+                                printf("%s ==> %s\n", src_basename,
+                                       entries[i].dst);
+                        } else {
+                                printf("%s ==> %s\n", entries[i].file,
+                                       entries[i].dst);
+                        }
+                        operations++;
+                }
         } else {
                 printfc(ERROR, "%s ==> %s\n", strerror(errno), entries[i].file);
         }
