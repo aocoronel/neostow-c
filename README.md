@@ -69,7 +69,9 @@ The `.neostow` file should be placed in the root of your project directory.
 Example `.neostow` file:
 
 ```text
-config/myconfig=/home/username/.config/myconfig/ scripts/myscript.sh=/home/username/bin/myscript/
+config/myconfig=/home/username/.config/myconfig/
+scripts/myscript.sh=/home/username/bin/myscript/
+myfile=$HOME/Downloads
 ```
 
 ## Integrations
