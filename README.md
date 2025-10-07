@@ -57,7 +57,8 @@ Options:
   -o, --overwrite
           Overwrite existing symlinks
   -v, --version
-          Displays program version```
+          Displays program version
+```
 
 ### Configuration File
 
