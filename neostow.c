@@ -28,6 +28,8 @@ bool DEBUG_MODE = false;
 int operations = 0;
 int count = 0;
 
+char *NEOSTOW_FILE = ".neostow";
+
 struct config_data {
         char *file;
         char *src;
@@ -61,7 +63,6 @@ void version();
 
 int main(int argc, char *argv[]) {
         int opt = 0;
-        char *NEOSTOW_FILE = ".neostow";
         char cwd[MAX_PATH_LEN];
         char config_file[MAX_PATH_LEN + 256];
 
@@ -165,10 +166,7 @@ int main(int argc, char *argv[]) {
                 free(entries[i].file);
         }
 
-        if (DRY_MODE)
-                printf("%s", "No operations were applied.\n");
-        else
-                printf("%d operations were applied.\n", operations);
+        printf("%d operations were applied.\n", operations);
 
         return EXIT_SUCCESS;
 }
@@ -285,8 +283,8 @@ int read_config(char *file) {
 
                 eq_pos = strchr(line, '=');
                 if (!eq_pos) {
-                        printfc(ERROR, "invalid line:\n%d | %s\n", linenum,
-                                line);
+                        printfc(ERROR, "%s:%d: invalid line\n", NEOSTOW_FILE,
+                                linenum);
                         continue;
                 }
 
@@ -314,7 +312,7 @@ int read_config(char *file) {
                         printfc(DEBUG, "Expanded Destination: %s\n",
                                 expanded_dst);
                         printfc(DEBUG, "Source: %s\n", data_src);
-                        printfc(DEBUG, "Expanded Source: %s\n", expanded_src);
+                        printfc(DEBUG, "Expanded Source: %s\n\n", expanded_src);
                 }
 
                 const char *filename = basename_from_path(data_src);
@@ -422,12 +420,7 @@ int neostow(int i) {
         snprintf(filepath, MAX_PATH_LEN, "%s/%s", entries[i].dst,
                  entries[i].file);
 
-        if (DRY_MODE == true) {
-                printf("%s ==> %s\n", entries[i].file, entries[i].dst);
-                return EXIT_SUCCESS;
-        }
-
-        ensure_directory(entries[i].dst);
+        if (DRY_MODE == false) ensure_directory(entries[i].dst);
 
         if (DEBUG_MODE) {
                 printfc(DEBUG, "Source: %s\n", entries[i].src);
@@ -460,15 +453,25 @@ int neostow(int i) {
                                         return EXIT_SUCCESS;
                         }
 
-                        if (remove(filepath) != 0) {
-                                printfc(ERROR, "failed to remove %s: %s\n",
-                                        filepath, strerror(errno));
-                                return EXIT_FAILURE;
+                        if (DRY_MODE) {
+                                printfc(INFO, "would remove %s\n", filepath);
+                        } else {
+                                if (remove(filepath) != 0) {
+                                        printfc(ERROR,
+                                                "failed to remove %s: %s\n",
+                                                filepath, strerror(errno));
+                                        return EXIT_FAILURE;
+                                } else
+                                        operations++;
                         }
-                        operations++;
                 }
 
                 if (DELETE) return EXIT_SUCCESS;
+        }
+
+        if (DRY_MODE) {
+                printf("%s ==> %s\n", entries[i].file, entries[i].dst);
+                return EXIT_SUCCESS;
         }
 
         if (symlink(entries[i].src, filepath) == 0) {
