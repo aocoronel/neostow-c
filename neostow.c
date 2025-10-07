@@ -18,7 +18,7 @@
 #define MAX_ENTRIES 1000
 
 bool VERBOSE = false;
-bool FAIL_SAFE = false;
+bool DRY_MODE = false;
 bool REMOVE = false;
 bool DELETE = false;
 bool DEBUG_MODE = false;
@@ -36,6 +36,7 @@ static struct option long_options[] = { { "verbose", no_argument, 0, 'V' },
                                         { "help", no_argument, 0, 'h' },
                                         { "config", required_argument, 0, 'c' },
                                         { "debug", no_argument, 0, 'D' },
+                                        { "dry", no_argument, 0, 'd' },
                                         { "delete", no_argument, 0, 'd' },
                                         { "remove", no_argument, 0, 'r' },
                                         { "version", no_argument, 0, 'v' },
@@ -59,9 +60,7 @@ int main(int argc, char *argv[]) {
         char cwd[MAX_PATH_LEN];
         char config_file[MAX_PATH_LEN + 256];
 
-        if (getcwd(cwd, sizeof(cwd)) != NULL) {
-                // printfc(DEBUG, "Current working directory: %s\n", cwd);
-        } else {
+        if (getcwd(cwd, sizeof(cwd)) == NULL) {
                 printfc(FATAL, "failed to get current working directory.\n");
                 return EXIT_FAILURE;
         }
@@ -80,6 +79,9 @@ int main(int argc, char *argv[]) {
                         break;
                 case 'V':
                         VERBOSE = true;
+                        break;
+                case 'd':
+                        DRY_MODE = true;
                         break;
                 case 'v':
                         version();
@@ -152,6 +154,7 @@ int main(int argc, char *argv[]) {
                 free(entries[i].file);
         }
 
+        if (DRY_MODE) printf("%s", "No operations were applied.\n");
         return EXIT_SUCCESS;
 }
 
@@ -185,8 +188,22 @@ char *expand_value(const char *value) {
                 if (!home) home = "";
                 snprintf(temp, sizeof(temp), "%s%s", home, value + 1);
         } else if (value[0] == '$') {
-                const char *env = getenv(value + 1);
-                snprintf(temp, sizeof(temp), "%s", env ? env : "");
+                const char *slash = strchr(value, '/');
+                char varname[256];
+
+                if (slash) {
+                        size_t len = slash - value - 1;
+                        strcpy(varname, "");
+                        strncpy(varname, value + 1, len);
+                        varname[len] = '\0';
+                } else {
+                        strcpy(varname, value + 1);
+                }
+
+                const char *env = getenv(varname);
+                if (!env) env = "";
+
+                snprintf(temp, sizeof(temp), "%s%s", env, slash ? slash : "");
         } else {
                 snprintf(temp, sizeof(temp), "%s", value);
         }
@@ -199,7 +216,7 @@ char *expand_value(const char *value) {
                 if (getcwd(cwd, sizeof(cwd))) {
                         char *full_path =
                                 malloc(strlen(cwd) + 1 + strlen(temp) + 1);
-                        if (!full_path) return safe_strdup(temp); // fallback
+                        if (!full_path) return safe_strdup(temp);
                         sprintf(full_path, "%s/%s", cwd, temp);
                         return full_path;
                 }
@@ -232,10 +249,10 @@ int read_config(char *file) {
         int linenum = 0;
         char line[MAX_LINE_LEN];
         char *eq_pos;
-        char *key;
-        char *value;
-        char *expanded_value;
-        char *expanded_key;
+        char *data_src;
+        char *data_dst;
+        char *expanded_dst;
+        char *expanded_src;
 
         while (fgets(line, MAX_LINE_LEN, fp)) {
                 linenum++;
@@ -249,29 +266,47 @@ int read_config(char *file) {
 
                 eq_pos = strchr(line, '=');
                 if (!eq_pos) {
-                        printfc(ERROR, "Line %d: %s\n", linenum, line);
+                        printfc(ERROR, "invalid line:\n%d | %s\n", linenum,
+                                line);
                         continue;
                 }
 
                 *eq_pos = '\0';
-                key = line;
-                value = eq_pos + 1;
+                data_src = line;
+                data_dst = eq_pos + 1;
+                expanded_dst = expand_value(data_dst);
+                expanded_src = expand_value(data_src);
 
-                expanded_value = expand_value(value);
-                expanded_key = expand_value(key);
-                if (!expanded_value) {
-                        printfc(ERROR, "failed to expand value for key '%s'\n",
-                                key);
+                if (!expanded_dst) {
+                        printfc(ERROR,
+                                "failed to expand value for destination '%s'\n",
+                                data_dst);
+                        continue;
+                }
+                if (!expanded_src) {
+                        printfc(ERROR,
+                                "failed to expand value for source '%s'\n",
+                                data_src);
                         continue;
                 }
 
-                const char *filename = basename_from_path(key);
+                if (DEBUG_MODE) {
+                        printfc(DEBUG, "Destination: %s\n", data_dst);
+                        printfc(DEBUG, "Expanded Destination: %s\n",
+                                expanded_dst);
+                        printfc(DEBUG, "Source: %s\n", data_src);
+                        printfc(DEBUG, "Expanded Source: %s\n", expanded_src);
+                }
+
+                const char *filename = basename_from_path(data_src);
                 entries[count].file = safe_strdup(filename);
-                entries[count].src = safe_strdup(expanded_key);
-                entries[count].dst = expanded_value;
+                entries[count].src = safe_strdup(expanded_src);
+                entries[count].dst = expanded_dst;
                 if (!entries[count].src) {
-                        free(expanded_value);
-                        printfc(ERROR, "failed to allocate memory for key\n");
+                        free(expanded_src);
+                        printfc(ERROR,
+                                "failed to allocate memory for source file: %s\n",
+                                entries[count].src);
                         continue;
                 }
 
@@ -311,37 +346,62 @@ int ensure_directory(const char *path) {
 }
 
 int neostow(int i) {
-        struct stat st_src;
-        if (stat(entries[i].src, &st_src) != 0) {
-                printfc(ERROR, "%s\n", strerror(errno));
-                return EXIT_FAILURE;
-        };
-        if (S_ISREG(st_src.st_mode)) {
-                if (DEBUG_MODE) printfc(DEBUG, "found %s\n", entries[i].src);
-        } else {
-                if (DEBUG_MODE)
-                        printfc(DEBUG, "not found %s\n", entries[i].src);
-                return EXIT_FAILURE;
-        }
+        {
+                bool found_src = false;
+                bool found_dst = false;
+                struct stat st_src;
+                struct stat st_dst;
 
-        struct stat st_dst;
-        if (stat(entries[i].dst, &st_dst) != 0) {
-                printfc(ERROR, "%s\n", strerror(errno));
-                return EXIT_FAILURE;
-        };
-        if (S_ISDIR(st_dst.st_mode)) {
-                if (DEBUG_MODE) printfc(DEBUG, "found %s\n", entries[i].dst);
-        } else {
-                if (DEBUG_MODE)
-                        printfc(DEBUG, "not found %s\n", entries[i].dst);
-                if (FAIL_SAFE) return EXIT_FAILURE;
+                if (stat(entries[i].src, &st_src) != 0) {
+                        printfc(ERROR, "%s ==> %s\n", strerror(errno),
+                                entries[i].file);
+                        return EXIT_FAILURE;
+                };
+                if (S_ISREG(st_src.st_mode) || S_ISDIR(st_src.st_mode)) {
+                        found_src = true;
+                }
+
+                if (stat(entries[i].dst, &st_dst) != 0) {
+                        printfc(ERROR, "%s ==> %s\n", strerror(errno),
+                                entries[i].dst);
+                        return EXIT_FAILURE;
+                };
+                if (S_ISDIR(st_dst.st_mode)) {
+                        found_dst = true;
+                }
+                if (!found_src) {
+                        if (VERBOSE) {
+                                printfc(ERROR, "source not found: %s\n",
+                                        entries[i].src);
+                                return EXIT_FAILURE;
+                        }
+                }
+                if (!found_dst) {
+                        if (VERBOSE) {
+                                printfc(ERROR, "destination not found: %s\n",
+                                        entries[i].dst);
+                                return EXIT_FAILURE;
+                        }
+                }
         }
 
         char filepath[MAX_PATH_LEN];
         snprintf(filepath, MAX_PATH_LEN, "%s/%s", entries[i].dst,
                  entries[i].file);
 
-        if (FAIL_SAFE == false) ensure_directory(entries[i].dst);
+        if (DRY_MODE == true) {
+                printf("%s ==> %s\n", entries[i].file, entries[i].dst);
+                return EXIT_SUCCESS;
+        }
+
+        ensure_directory(entries[i].dst);
+
+        if (DEBUG_MODE) {
+                printfc(DEBUG, "Source: %s\n", entries[i].src);
+                printfc(DEBUG, "Destination: %s\n", entries[i].dst);
+                printfc(DEBUG, "Source File: %s\n", entries[i].file);
+                printfc(DEBUG, "Destination File: %s\n", filepath);
+        }
 
         if (REMOVE) {
                 struct stat st_file;
