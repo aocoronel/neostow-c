@@ -12,6 +12,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sys/wait.h>
 
 #define MAX_PATH_LEN 4096
 #define MAX_LINE_LEN 1024
@@ -155,7 +156,8 @@ int main(int argc, char *argv[]) {
         for (i = 0; i < count; i++) {
                 if (neostow(i) != 0) {
                         if (DEBUG_MODE)
-                                printfc(ERROR, "processing %s\n",
+                                printfc(ERROR,
+                                        "an error occurred while processing %s\n",
                                         entries[i].file);
                 };
                 free(entries[i].src);
@@ -275,7 +277,11 @@ int read_config(char *file) {
                         break;
                 }
 
+                if (line[0] == '#' || strlen(line) < 3) continue;
                 line[strcspn(line, "\r\n")] = '\0';
+
+                char *hash = strchr(line, '#');
+                if (hash) *hash = '\0';
 
                 eq_pos = strchr(line, '=');
                 if (!eq_pos) {
@@ -358,6 +364,21 @@ int ensure_directory(const char *path) {
         return 0;
 }
 
+int diff(const char *src, const char *dst) {
+        pid_t pid = fork();
+        if (pid == 0) {
+                execlp("diff", "diff", "-u", src, dst, (char *)NULL);
+                _exit(127);
+        } else if (pid > 0) {
+                int status;
+                waitpid(pid, &status, 0);
+                return status;
+        } else {
+                printfc(ERROR, "%s ==> %s\n", strerror(errno), src);
+                return -1;
+        }
+}
+
 int neostow(int i) {
         {
                 bool found_src = false;
@@ -417,37 +438,34 @@ int neostow(int i) {
 
         if (REMOVE) {
                 struct stat st_file;
-                if (lstat(filepath, &st_file) != 0) {
-                        printfc(ERROR, "%s\n", strerror(errno));
-                        return EXIT_FAILURE;
-                }
+                if (lstat(filepath, &st_file) == 0) {
+                        if (FORCE == false && !S_ISLNK(st_file.st_mode)) {
+                                printf("Diff: %s x %s\n", entries[i].file,
+                                       filepath);
+                                diff(entries[i].src, filepath);
+                                char choice;
+                                printf("Do you want to continue? (y/N): ");
+                                do {
+                                        choice = fgetc(stdin);
 
-                if (FORCE == false && !S_ISLNK(st_file.st_mode)) {
-                        char cmd[MAX_PATH_LEN + MAX_PATH_LEN];
-                        snprintf(cmd, sizeof(cmd), "%s %s %s", "diff -u",
-                                 filepath, entries[i].src);
-                        printf("Diff: %s x %s\n", entries[i].file, filepath);
-                        system(cmd);
+                                        int c;
+                                        while ((c = getchar()) != '\n' &&
+                                               c != EOF)
+                                                ;
 
-                        char choice;
-                        printf("Do you want to continue? (y/N): ");
-                        do {
-                                choice = fgetc(stdin);
+                                } while (choice != 'Y' && choice != 'y' &&
+                                         choice != 'N' && choice != 'n');
 
-                                int c;
-                                while ((c = getchar()) != '\n' && c != EOF)
-                                        ;
+                                if (choice == 'N' || choice == 'n')
+                                        return EXIT_SUCCESS;
+                        }
 
-                        } while (choice != 'Y' && choice != 'y' &&
-                                 choice != 'N' && choice != 'n');
-
-                        if (choice == 'N' || choice == 'n') return EXIT_SUCCESS;
-                }
-
-                if (remove(filepath) != 0) {
-                        printfc(ERROR, "Failed to remove %s: %s\n", filepath,
-                                strerror(errno));
-                        return EXIT_FAILURE;
+                        if (remove(filepath) != 0) {
+                                printfc(ERROR, "failed to remove %s: %s\n",
+                                        filepath, strerror(errno));
+                                return EXIT_FAILURE;
+                        }
+                        operations++;
                 }
 
                 if (DELETE) return EXIT_SUCCESS;
