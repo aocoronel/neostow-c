@@ -83,9 +83,9 @@ myfile=$HOME/Downloads
 In or `justfile`, you may create a recipe like this:
 
 ```just
-# Neostow: Verbose and overwrite
+# Neostow: Overwrite
 neostow:
-  neostow -v -r
+  neostow -o
 ```
 
 Then, from any child directory where this `justfile` was placed, you can just run `just neostow`, and it will run the configured recipe.
