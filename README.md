@@ -28,7 +28,7 @@ cmake --install build
 
 See the manpage(1) at `FILES` for more details.
 
-```console
+````console
 neostow | The Declarative GNU Stow
 
 Usage:  neostow [OPTIONS] <COMMAND>
@@ -44,17 +44,20 @@ Commands:
 Options:
   -D, --debug
           Enables debug verbosity
+  -F, --force
+          Skip prompt dialogs
   -V, --verbose
           Enable verbosity
   -c, --config <CONFIG>
           Load an alternative config
+  -d, --dry
+          Describe potential operations
   -h, --help
           Displays this message and exits
-  -r, --remove
-          Remove duplicate files
+  -o, --overwrite
+          Overwrite existing symlinks
   -v, --version
-          Displays program version
-```
+          Displays program version```
 
 ### Configuration File
 
@@ -64,10 +67,11 @@ The `.neostow` file should be placed in the root of your project directory.
 
 Example `.neostow` file:
 
-```
-config/myconfig=/home/username/.config/myconfig/
-scripts/myscript.sh=/home/username/bin/myscript/
-```
+````
+
+config/myconfig=/home/username/.config/myconfig/ scripts/myscript.sh=/home/username/bin/myscript/
+
+````
 
 ## Integrations
 
@@ -81,7 +85,7 @@ In or `justfile`, you may create a recipe like this:
 # Neostow: Verbose and overwrite
 neostow:
   neostow -v -r
-```
+````
 
 Then, from any child directory where this `justfile` was placed, you can just run `just neostow`, and it will run the configured recipe.
 

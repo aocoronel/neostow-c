@@ -21,23 +21,29 @@ Remove all existing symlinks from the configuration file.
 Edit the configuration file using the default EDITOR.
 .SH OPTIONS
 .TP
-.B -h, --help
-Display the help message and exits.
-.TP
-.B -r, --remove
-Overwrite symlinks, if they already exist.
-.TP
-.B -c, --config [CONFIG]
-Load an alternative config.
-.TP
-.B -V, --verbose
-Enable verbosity.
-.TP
-.B -v, --version
-Displays program version.
 .TP
 .B -D, --debug
 Enables debug verbosity.
+.TP
+.B -F, --force
+Skip prompt dialogs. This will skip a prompt that appears, when the destination is not a symlink.
+.TP
+.B -V, --verbose
+Enable verbosity.
+.B -c, --config [CONFIG]
+Load an alternative config.
+.TP
+.B -d, --dry
+Describe potential operations. No symlink or remove operation occurs.
+.TP
+.B -h, --help
+Display the help message and exits.
+.TP
+.B -o, --overwrite
+Overwrite symlinks, if they already exist. If the destination is a file, a prompt will request the user to accept the operation with a diff.
+.TP
+.B -v, --version
+Displays program version.
 .SH FILES
 
 The configuration file is defined as .neostow. By default this file will be looked in the current directory, otherwise explicitly located using the -c option.
