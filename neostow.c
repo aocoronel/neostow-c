@@ -107,19 +107,6 @@ int main(int argc, char *argv[]) {
                 }
         }
 
-        snprintf(config_file, sizeof(config_file), "%s/%s", cwd, NEOSTOW_FILE);
-        struct stat st;
-        if (stat(config_file, &st) != 0) {
-                printfc(FATAL, "%s\n", strerror(errno));
-                return EXIT_FAILURE;
-        };
-        if (S_ISREG(st.st_mode)) {
-                if (DEBUG_MODE) printfc(DEBUG, "found neostow file\n");
-        } else {
-                if (DEBUG_MODE) printfc(DEBUG, "neostow file not found\n");
-                return EXIT_FAILURE;
-        }
-
         if (optind < argc && strcmp(argv[optind], "autocomplete") == 0) {
                 optind++;
                 if (optind >= argc) {
@@ -140,7 +127,22 @@ int main(int argc, char *argv[]) {
                                 argv[0]);
                         return EXIT_FAILURE;
                 }
-        } else if (optind < argc && strcmp(argv[optind], "edit") == 0) {
+        }
+
+        snprintf(config_file, sizeof(config_file), "%s/%s", cwd, NEOSTOW_FILE);
+        struct stat st;
+        if (stat(config_file, &st) != 0) {
+                printfc(FATAL, "%s\n", strerror(errno));
+                return EXIT_FAILURE;
+        };
+        if (S_ISREG(st.st_mode)) {
+                if (DEBUG_MODE) printfc(DEBUG, "found neostow file\n");
+        } else {
+                if (DEBUG_MODE) printfc(DEBUG, "neostow file not found\n");
+                return EXIT_FAILURE;
+        }
+
+        if (optind < argc && strcmp(argv[optind], "edit") == 0) {
                 optind++;
                 if (edit_config(config_file) != 0)
                         return EXIT_FAILURE;
