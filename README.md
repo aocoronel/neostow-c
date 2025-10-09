@@ -1,35 +1,68 @@
-# The declarative GNU Stow
+# The declarative GNU stow
 
-`neostow` is a tool that streamline the process to manage symlinks like GNU stow, but using a neostow file. It allows for more flexible symlink management, enabling the creation of symlinks from anywhere to anywhere on your computer.
+`neostow` is a tool that streamline the process to manage symlinks like GNU `stow`, but using a `neostow` file, instead. It allows more flexible symlink management, enabling the creation of symlinks from a relative source to anywhere on your computer.
 
-This declarative nature allows to easily make reproducible and granular symlinking, unlike GNU Stow. However, this project does not aims to fully replace GNU Stow, but to give a declarative feature missing from it.
+This declarative nature allows to easily make reproducible and granular symlinking, unlike `stow`. However, this project does not aims to fully replace it, but to give a declarative feature missing from it.
 
-You can also look for a version of this script written in Bash at [aocoronel/neostow-sh](https://github.com/aocoronel/neostow-sh), or a legacy version written in Nim at [aocoronel/neostow-nim](https://github.com/aocoronel/neostow-nim).
+This tool is useful to keep files and directories organized in a single centralized place, while also having them across the system. Differently, than `stow`, which allows you to place some files into a different target, other than the parent directory, `neostow` aims to further improve this functionality.
+
+With `neostow` each file or directory can be symlinked to a specific part of the system, and not the project as a whole. There is not ignore file, and no need to adjust the folder layout to achieve your goals. If your `neostow` does not explicitly specify an operation, it won't touch a single file.
+
+Other versions of Neostow:
+
+- [aocoronel/neostow-sh](https://github.com/aocoronel/neostow-sh)
+- [aocoronel/neostow-nim](https://github.com/aocoronel/neostow-nim): No longer maintained.
+- [aocoronel/neostow-rs](https://github.com/aocoronel/neostow-rs)
 
 ## Features
 
-- **Flexible Symlink Creation**: Create symlinks from any source to any destination.
-- **Per-Project Neostow file**: Maintain a `.neostow` file per project.
-- **Overwrite Symlinks**: Optionally overwrite existing symlinks.
-- **Remove Symlinks**: Easily remove all created symlinks.
+- **Flexible symlink creation**: Create symlinks from any relative source to any destination.
+- **Per-project file**: Maintain a `.neostow` file per project.
+- **Overwrite symlinks**: Optionally overwrite existing symlinks.
+- **Remove symlinks**: Easily remove all created symlinks.
+- **Preview operations**: Preview what operations would run.
 
 ## Installation
 
+Copy the source:
+
 ```bash
 git clone https://github.com/aocoronel/neostow-c.git
-cd neostow-c || return 1
+cd neostow-c
+```
+
+To install `neostow`:
+
+```bash
 cmake -DCMAKE_BUILD_TYPE=Release -B build .
 cmake --install build
 ```
 
+To install manpages:
+
+```bash
+sudo cp docs/neostow.1 /usr/share/man/man1/
+```
+
+To install completions:
+
+```bash
+# Bash
+sudo neostow autocomplete bash > /usr/share/bash-completion/completions/_neostow
+# Zsh
+sudo neostow autocomplete zsh > /usr/share/zsh/site-functions/_neostow
+```
+
 ## Usage
 
-`neostow` reads from a `.neostow` file in the current directory to determine which symlinks to create. The `.neostow` file should contain lines in the following format: `source=destination`.
+`neostow` reads from a `.neostow` file in the current directory to determine which symlinks to create.
 
-See the manpage(1) at `FILES` for more details.
+The `.neostow` file should contain lines in the following format: `source=destination`.
+
+See the manpage(1) at `FILES` for more details. Or give at look at the [example file](https://github.com/aocoronel/neostow-c/blob/main/test/.neostow) and [Examples](#examples).
 
 ```console
-neostow | The Declarative GNU Stow
+neostow | the declarative GNU stow
 
 Usage:  neostow [OPTIONS] <COMMAND>
 
@@ -60,7 +93,7 @@ Options:
           Displays program version
 ```
 
-### Neostow File
+### Configuration File
 
 The `.neostow` file should be placed in the root of your project directory.
 
@@ -69,16 +102,20 @@ The `.neostow` file should be placed in the root of your project directory.
 Example `.neostow` file:
 
 ```text
-config/myconfig=/home/username/.config/myconfig/
-scripts/myscript.sh=/home/username/bin/myscript/
-myfile=$HOME/Downloads
+config/myconfig.txt=/home/username/.config/myconfig/ # links myconfig.txt to ~/.config/myconfig/
+scripts/myscript.sh=/home/username/bin/myscript/ # links myscript.sh to ~/bin/myscrypt/
+myfile=$HOME/Downloads # links myfile to ~/Downloads
 ```
+
+The left side paths are relative to the current directory where the `.neostow` file is found.
 
 ## Integrations
 
 ### [Just](https://github.com/casey/just)
 
 `just` is a handy way to save and run `neostow` commands from any directory within the project.
+
+Because, `neostow` has the limitation to only find `.neostow` files in the current directory, `just` gives an extra functionality. Integrating both, allows you to run `neostow` from the root of the project, thus finding the `.neostow` file.
 
 In or `justfile`, you may create a recipe like this:
 
@@ -89,6 +126,10 @@ neostow:
 ```
 
 Then, from any child directory where this `justfile` was placed, you can just run `just neostow`, and it will run the configured recipe.
+
+## Notes
+
+This program was only tested in a Linux machine.
 
 ## License
 
