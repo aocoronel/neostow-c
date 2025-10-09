@@ -1,4 +1,4 @@
-.TH neostow 1
+.TH neostow 1 "C Edition"
 .SH NAME
 .B neostow
 \- the declarative GNU stow(1)
@@ -6,9 +6,13 @@
 .B neostow
 .I [OPTION] [ARGUMENT]
 .SH DESCRIPTION
-neostow is a tool that streamline the process to manage symlinks like GNU stow(1), but using a neostow file. It allows for more flexible symlink management, enabling the creation of symlinks from anywhere to anywhere on your computer.
+neostow is a tool that streamline the process to manage symlinks like GNU stow(1), but using a neostow file, instead. It allows more flexible symlink management, enabling the creation of symlinks from a relative source to anywhere on your computer.
 
-This declarative nature allows to easily make reproducible and granular symlinking, unlike GNU Stow. However, this project does not aims to fully replace GNU Stow, but to give a declarative feature missing from it.
+This declarative nature allows to easily make reproducible and granular symlinking, unlike stow(1). However, this project does not aims to fully replace it, but to give a declarative feature missing from it.
+
+This tool is useful to keep files and directories organized in a single centralized place, while also having them across the system. Differently, than stow(1), which allows you to place some files into a different target, other than the parent directory, neostow aims to further improve this functionality.
+
+With neostow each file or directory can be symlinked to a specific part of the system, and not the project as a whole. There is not ignore file, and no need to adjust the folder layout to achieve your goals. If your `neostow` does not explicitly specify an operation, it won't touch a single file.
 .SH COMMANDS
 .TP
 .B autocomplete [bash|zsh]
@@ -29,6 +33,7 @@ Skip prompt dialogs. This will skip a prompt that appears, when the destination 
 .TP
 .B -V, --verbose
 Enable verbosity.
+.TP
 .B -f, --file [FILE]
 Load an alternative neostow file.
 .TP
