@@ -14,6 +14,22 @@ Other versions of Neostow:
 - [aocoronel/neostow-nim](https://github.com/aocoronel/neostow-nim): No longer maintained.
 - [aocoronel/neostow-rs](https://github.com/aocoronel/neostow-rs)
 
+## C Edition
+
+This project is the third on the `neostow` rewrites series, mainly for C learning purposes. The original `neostow` is the POSIX shell version.
+
+### Bugs
+
+Currently, there is one known bug.
+
+1. Using the `-f` or `--file` option does not work at all.
+
+### Vulnerabilities
+
+Because C is an easy language to introduce vulnerabilities, and I'm not an grey beard on C, I cannot review the code to give any guarantees, that there is no vulnerability in the code.
+
+The C version runs `diff` to compare non-symbolic files to the source file. However, it does not use direct shell, which can be exploited with special constructs such as `||`, `&&` or `;`. This is a general improvement compared to the `neostow-sh`, but no guarantee is given.
+
 ## Features
 
 - **Flexible symlink creation**: Create symlinks from any relative source to any destination.
