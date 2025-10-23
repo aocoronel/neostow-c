@@ -6,6 +6,7 @@
 # Comments can be done using hashtags.
 
 file.zip=$HOME
+file.zip # Symlinks to parent directory
 file.docx=. # This directory
 # ignored line
 broken line # lines without = are invalid

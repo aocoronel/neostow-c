@@ -255,6 +255,31 @@ const char *basename_from_path(const char *path) {
         return slash ? slash + 1 : path;
 }
 
+const char *memrchr(const char *s, int c, size_t n) {
+    const char *end = s + n;
+    while (end > s) {
+        if (*--end == (char)c) {
+            return end;
+        }
+    }
+    return NULL;
+}
+
+char *dirname_from_path(char *path) {
+    const char *slash = strrchr(path, '/');
+    if (!slash || slash == path) {
+        return NULL;
+    }
+    const char *prev_slash = memrchr(path, '/', slash - path);
+    if (!prev_slash) {
+        path[slash - path] = '\0';
+        return path;
+    }
+    size_t len = prev_slash - path + 1;
+    path[len] = '\0';
+    return path;
+}
+
 int read_config(char *file) {
         FILE *fp = fopen(file, "r");
         if (!fp) {
@@ -264,8 +289,8 @@ int read_config(char *file) {
         int linenum = 0;
         char line[MAX_LINE_LEN];
         char *eq_pos;
-        char *data_src;
-        char *data_dst;
+        const char *data_src;
+        const char *data_dst;
         char *expanded_dst;
         char *expanded_src;
 
@@ -285,16 +310,21 @@ int read_config(char *file) {
 
                 eq_pos = strchr(line, '=');
                 if (!eq_pos) {
-                        printfc(ERROR, "%s:%d: invalid line\n", NEOSTOW_FILE,
-                                linenum);
-                        continue;
+                        data_src = line;
+                        expanded_src = expand_value(data_src);
+                        data_dst = dirname_from_path(expand_value(line));
+                        if (data_dst == NULL) {
+                                printfc(ERROR, "failed to get destination for %s", data_src);
+                                continue;
+                        }
+                        expanded_dst = expand_value(data_dst);
+                } else {
+                        *eq_pos = '\0';
+                        data_src = line;
+                        data_dst = eq_pos + 1;
+                        expanded_dst = expand_value(data_dst);
+                        expanded_src = expand_value(data_src);
                 }
-
-                *eq_pos = '\0';
-                data_src = line;
-                data_dst = eq_pos + 1;
-                expanded_dst = expand_value(data_dst);
-                expanded_src = expand_value(data_src);
 
                 if (!expanded_dst) {
                         printfc(ERROR,
