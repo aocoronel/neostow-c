@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include <limits.h>
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -193,15 +194,35 @@ char *safe_strdup(const char *s) {
         return p;
 }
 
+static void trim(char *str) {
+        if (!str) return;
+
+        char *start = str;
+        while (*start && isspace((unsigned char)*start)) {
+                start++;
+        }
+
+        if (start != str) {
+                memmove(str, start, strlen(start) + 1);
+        }
+
+        char *end = str + strlen(str) - 1;
+        while (end >= str && isspace((unsigned char)*end)) {
+                *end = '\0';
+                end--;
+        }
+}
+
 char *expand_value(const char *value) {
         if (!value || value[0] == '\0') return safe_strdup("");
 
         char temp[MAX_PATH_LEN];
 
-        if (value[0] == '~') {
+        if (value[0] == '~' && value[1] == '/') {
                 const char *home = getenv("HOME");
                 if (!home) home = "";
-                snprintf(temp, sizeof(temp), "%s%s", home, value + 1);
+                snprintf(temp, sizeof(temp), "%s%s", home, value + 2);
+                trim(temp);
         } else if (value[0] == '$') {
                 const char *slash = strchr(value, '/');
                 char varname[256];
@@ -219,8 +240,13 @@ char *expand_value(const char *value) {
                 if (!env) env = "";
 
                 snprintf(temp, sizeof(temp), "%s%s", env, slash ? slash : "");
+                trim(temp);
+        } else if (value[0] == '.') {
+                snprintf(temp, sizeof(temp), "%s", value + 1);
+                trim(temp);
         } else {
                 snprintf(temp, sizeof(temp), "%s", value);
+                trim(temp);
         }
 
         char *resolved = realpath(temp, NULL);
@@ -256,28 +282,28 @@ const char *basename_from_path(const char *path) {
 }
 
 const char *memrchr(const char *s, int c, size_t n) {
-    const char *end = s + n;
-    while (end > s) {
-        if (*--end == (char)c) {
-            return end;
+        const char *end = s + n;
+        while (end > s) {
+                if (*--end == (char)c) {
+                        return end;
+                }
         }
-    }
-    return NULL;
+        return NULL;
 }
 
 char *dirname_from_path(char *path) {
-    const char *slash = strrchr(path, '/');
-    if (!slash || slash == path) {
-        return NULL;
-    }
-    const char *prev_slash = memrchr(path, '/', slash - path);
-    if (!prev_slash) {
-        path[slash - path] = '\0';
+        const char *slash = strrchr(path, '/');
+        if (!slash || slash == path) {
+                return NULL;
+        }
+        const char *prev_slash = memrchr(path, '/', slash - path);
+        if (!prev_slash) {
+                path[slash - path] = '\0';
+                return path;
+        }
+        size_t len = prev_slash - path + 1;
+        path[len] = '\0';
         return path;
-    }
-    size_t len = prev_slash - path + 1;
-    path[len] = '\0';
-    return path;
 }
 
 int read_config(char *file) {
@@ -314,7 +340,9 @@ int read_config(char *file) {
                         expanded_src = expand_value(data_src);
                         data_dst = dirname_from_path(expand_value(line));
                         if (data_dst == NULL) {
-                                printfc(ERROR, "failed to get destination for %s", data_src);
+                                printfc(ERROR,
+                                        "failed to get destination for %s",
+                                        data_src);
                                 continue;
                         }
                         expanded_dst = expand_value(data_dst);
@@ -438,7 +466,7 @@ int neostow(int i) {
                 }
                 if (stat(entries[i].dst, &st_dst) != 0) {
                         printfc(ERROR, "%s ==> %s\n", strerror(errno),
-                                entries[i].dst);
+                                entries[i].file);
                         return EXIT_FAILURE;
                 }
                 if (S_ISDIR(st_dst.st_mode) || S_ISREG(st_dst.st_mode)) {
