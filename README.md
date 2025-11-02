@@ -1,5 +1,8 @@
 # The declarative GNU stow
 
+> [!WARNING]
+> This repository has been moved to Codeberg. Find it at [aocoronel/neostow-c](https://codeberg.org/aocoronel/neostow-c).
+
 `neostow` is a tool that streamline the process to manage symlinks like GNU `stow`, but using a `neostow` file, instead. It allows more flexible symlink management, enabling the creation of symlinks from a relative source to anywhere on your computer.
 
 This declarative nature allows to easily make reproducible and granular symlinking, unlike `stow`. However, this project does not aims to fully replace it, but to give a declarative feature missing from it.
